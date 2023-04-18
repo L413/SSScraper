@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Cursor.cc Icons Downloader</title>
+</head>
+<body>
+    <button id="downloadBtn">Download Icons</button>
+    <div id="loader" style="display: none;">Loading...</div>
+    <progress id="progressBar" value="0" max="100" style="display: none;"></progress>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.5.0/jszip.min.js"></script>
+    <script>
+        async function getAllIcons() {
+            const startId = 100000;
+            const endId = 160003;
+            const iconRows = [];
+            const loader = document.getElementById("loader");
+            loader.style.display = "block";
+            for (let id = startId; id <= endId; id++) {
+                const url = `https://www.cursor.cc/?action=icon_list&user_id=${id}`;
+                const html = await getHTML(url);
+                const doc = new DOMParser().parseFromString(html, "text/html");
+                const rows = doc.querySelectorAll('div.icon_row[style*="cursor:"]');
+                rows.forEach((row) => {
+                    const imgURL = row.style.backgroundImage.slice(5, -2);
+                    iconRows.push(imgURL);
+                });
+            }
+            loader.style.display = "none";
+            const zip = new JSZip();
+            const numIcons = iconRows.length;
+            let numProcessedIcons = 0;
+            const progressBar = document.getElementById("progressBar");
+            progressBar.max = numIcons;
+            progressBar.value = numProcessedIcons;
+            for (let i = 0; i < numIcons; i++) {
+                const imgURL = iconRows[i];
+                fetch(imgURL)
+                    .then((response) => response.blob())
+                    .then((blob) => {
+                        zip.file(`icon${i}.png`, blob, { binary: true });
+                        numProcessedIcons++;
+                        progressBar.value = numProcessedIcons;
+                        if (numProcessedIcons === numIcons) {
+                            zip.generateAsync({ type: "blob" }).then((blob) => {
+                                const link = document.createElement("a");
+                                link.href = URL.createObjectURL(blob);
+                                link.download = "icon-images.zip";
+                                document.body.appendChild(link);
+                                link.click();
+                                document.body.removeChild(link);
+                                progressBar.style.display = "none";
+                            });
+                        }
+                    })
+                    .catch((error) => console.error(error));
+            }
+        }
+
+        function getHTML(url) {
+            return fetch(url).then((response) => response.text());
+        }
+    </script>
+    <script>
+        const downloadBtn = document.getElementById("downloadBtn");
+        downloadBtn.addEventListener("click", getAllIcons);
+    </script>
+</body>
+</html>
