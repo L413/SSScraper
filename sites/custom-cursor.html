@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+    <title>All Custom Cursor Assets</title>
+    <script src="script.js"></script>
+    <link rel="stylesheet" href="style.css" />
+    <style>
+      #source {
+        height: 100px;
+        width: 100%;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>All Custom Cursor Assets Test</h1>
+    <hr />
+    <div id="container"></div>
+    <script>
+      viewSource();
+      function viewSource() {
+        const hrefs = [];
+        const promises = [];
+
+        for (let page = 1; page <= 8; page++) {
+          const url = "https://custom-cursor.com/en/collections?page=" + page;
+          const promise = fetch(url)
+            .then((response) => response.text())
+            .then((html) => {
+              const parser = new DOMParser();
+              const doc = parser.parseFromString(html, "text/html");
+              const viewCollectionElements = doc.querySelectorAll(
+                'a[title="View collection"]'
+              );
+              viewCollectionElements.forEach((element) => {
+                const href = element.getAttribute("href");
+                hrefs.push("https://custom-cursor.com" + href);
+              });
+            })
+            .catch((error) => console.error(error));
+
+          promises.push(promise);
+        }
+
+        Promise.all(promises)
+          .then(() => {
+            const cPagePromises = hrefs.map((href) => getCurPage(href));
+            Promise.all(cPagePromises)
+              .then((pages) => {
+                const cPages = pages.flat();
+                document.getElementById("source").value = cPages.join("\n");
+              })
+              .catch((error) => console.error(error));
+          })
+          .catch((error) => console.error(error));
+      }
+
+      function getCurPage(url) {
+        const container = document.getElementById("container");
+        return fetch(url)
+          .then((response) => response.text())
+          .then((html) => {
+            const parser = new DOMParser();
+            const doc = parser.parseFromString(html, "text/html");
+            const viewCursorElements = doc.querySelectorAll(
+              'a[title="View cursor"]'
+            );
+            const cPage = [];
+            viewCursorElements.forEach((element) => {
+              const href = element.getAttribute("href");
+              fetchData("https://custom-cursor.com" + href).then((data) => {
+                // Create a new div element
+                const newDiv = document.createElement("div");
+
+                // Create an h2 element and add it to the new div
+                const h2 = document.createElement("h2");
+                h2.textContent = data.title;
+                newDiv.appendChild(h2);
+
+                // Create two input copy elements and add them to the new div
+                const copyInput1 = document.createElement("input");
+                copyInput1.value = data.sliderImg;
+                copyInput1.readOnly = true;
+                newDiv.appendChild(copyInput1);
+
+                // Create a copy button for the first copy div
+                const copyButton1 = document.createElement("button");
+                copyButton1.textContent = "Copy";
+                copyButton1.addEventListener("click", () => {
+                  const textToCopy = copyInput1.value;
+                  copyInput1.select();
+                  document.execCommand("copy");
+                });
+                newDiv.appendChild(copyButton1);
+
+                // Append a line break
+                newDiv.appendChild(document.createElement("br"));
+
+                const copyInput2 = document.createElement("input");
+                copyInput2.value = data.bLCursor;
+                copyInput2.readOnly = true;
+                newDiv.appendChild(copyInput2);
+
+                // Create a copy button for the second copy div
+                const copyButton2 = document.createElement("button");
+                copyButton2.textContent = "Copy";
+                copyButton2.addEventListener("click", () => {
+                  const textToCopy = copyInput2.value;
+                  copyInput2.select();
+                  document.execCommand("copy");
+                });
+                newDiv.appendChild(copyButton2);
+
+                // Append a line break
+                newDiv.appendChild(document.createElement("br"));
+
+                const copyInput3 = document.createElement("input");
+                copyInput3.value = data.btnCursor;
+                copyInput3.readOnly = true;
+                newDiv.appendChild(copyInput3);
+
+                // Create a copy button for the third copy div
+                const copyButton3 = document.createElement("button");
+                copyButton3.textContent = "Copy";
+                copyButton3.addEventListener("click", () => {
+                  const textToCopy = copyInput3.value;
+                  copyInput3.select();
+                  document.execCommand("copy");
+                });
+                newDiv.appendChild(copyButton3);
+
+                // Append a line break
+                newDiv.appendChild(document.createElement("br"));
+
+                // Add the new div to the container
+                container.appendChild(newDiv);
+              });
+            });
+            return cPage;
+          })
+          .catch((error) => console.error(error));
+      }
+
+      async function fetchData(url) {
+        try {
+          const response = await fetch(url);
+          const html = await response.text();
+
+          const parser = new DOMParser();
+          const doc = parser.parseFromString(html, "text/html");
+          const title = doc.title.replace(" cursor – Custom Cursor", "");
+          const sliderImg = doc
+            .querySelector(".single-slider-img > img")
+            .getAttribute("src");
+          const btnCursor = doc
+            .querySelector(".btn__tran")
+            .getAttribute("style")
+            .replace(/.*cursor:url\((.*?)\).*/g, "$1");
+          const bLCursor = doc
+            .querySelector(".single-b-l")
+            .getAttribute("style")
+            .replace(/.*cursor:url\((.*?)\).*/g, "$1");
+
+          return { title, sliderImg, bLCursor, btnCursor };
+        } catch (error) {
+          console.error(error);
+        }
+      }
+    </script>
+  </body>
+</html>
