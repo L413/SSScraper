@@ -44,7 +44,10 @@
           document.body.appendChild(newImg);
         };
         img.onerror = function () {
-          // The image does not exist, do nothing
+          existingImages.push('Error');
+          const resultTextarea = document.querySelector("#result");
+          resultTextarea.value = existingImages.join(", ").replace(/,/g, "");
+          resultTextarea.scrollTop = resultTextarea.scrollHeight;
         };
         img.src = url;
       }
